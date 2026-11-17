@@ -83,6 +83,10 @@ def about_text() -> str:
 
 
 def projects_text() -> str:
+    # Если проектов пока нет — показываем заглушку
+    if not config.PROJECTS:
+        return "<b>Работы</b>\n\nРаботы скоро появятся"
+
     lines = ["<b>Работы</b>\n"]
     for number, project in enumerate(config.PROJECTS, start=1):
         lines.append(
