@@ -105,17 +105,8 @@
   .flag { font-style: normal; white-space: nowrap; }
 
   /* ---------- появление элементов ---------- */
-  .js .a {
-    opacity: 0; transform: translateY(18px);
-    transition: opacity .6s ease, transform .6s cubic-bezier(.2, .7, .3, 1);
-    transition-delay: 0s;
-  }
-  .js .slide.shown .a {
-    opacity: 1; transform: none;
-    transition-delay: calc(.05s + var(--i, 0) * .15s);
-  }
-  .js .a.from-right { transform: translateX(26px); }
-  .js .slide.shown .a.from-right { transform: none; }
+  /* текст слайда скрыт, пока яблоко не долетит; потом он вылетает из яблока */
+  .js .a, .js .slide .footer { opacity: 0; will-change: transform, opacity; }
 
   /* ---------- титульный ---------- */
   .title-cols { grid-template-columns: 1.15fr 1fr; }
@@ -124,7 +115,7 @@
   .title-line { width: 120px; height: 5px; background: var(--accent); border-radius: 3px; margin: 8px 0; }
   .author p { font-size: 22px; line-height: 1.4; }
   .author .lbl { color: var(--muted); font-size: 17px; }
-  .photos { display: grid; grid-template-columns: 1fr 44px 1fr; align-items: center; height: 100%; gap: 8px; }
+  .photos { display: grid; grid-template-columns: 1fr 1fr; align-items: center; height: 100%; gap: 28px; }
   .ph {
     border: 2px dashed #9fb2d4; border-radius: 10px; background: var(--blue-soft);
     height: 330px; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -193,7 +184,7 @@
   .progress i { display: block; height: 100%; background: #c8302a; width: 12.5%; transition: width .9s ease; }
 
   @media (prefers-reduced-motion: reduce) {
-    .js .a, .js .slide.shown .a { transition: none !important; transform: none !important; }
+    .js .a, .js .slide .footer { transition: none !important; transform: none !important; }
   }
 
   /* ---------- текст прямо поверх фото ---------- */
@@ -288,7 +279,6 @@
           <div class="frame a from-right" style="--i:3; height:auto">
             <div class="photos">
               <div class="ph"><div class="ins">вставить фото</div><div class="who">Портрет Александра I<br>1777–1825</div></div>
-              <div class="qmark">=?</div>
               <div class="ph"><div class="ins">вставить фото</div><div class="who">Портрет старца<br>Федора Кузьмича<br>умер в 1864</div></div>
             </div>
           </div>
@@ -335,8 +325,6 @@
               <!-- дуга -->
               <path d="M115 145 C 160 60, 360 60, 405 145" fill="none" stroke="#1f4e9c" stroke-width="3" stroke-dasharray="9 8"/>
               <polygon points="405,147 396,128 414,130" fill="#1f4e9c"/>
-              <circle cx="260" cy="82" r="26" fill="#fff" stroke="#c8962e" stroke-width="3"/>
-              <text x="260" y="93" text-anchor="middle" font-size="32" font-weight="700" fill="#c8962e">?</text>
               <text x="260" y="360" text-anchor="middle" font-size="19" fill="#1d2433">Между событиями — около 12 лет</text>
             </svg>
           </div>
@@ -424,7 +412,7 @@
               <li>Внезапная смерть крепкого человека</li>
               <li>Вина за гибель отца — желание искупить</li>
               <li>Сам говорил, что хочет отойти от власти</li>
-              <li><i class="flag">🟡</i> Письмо Волконского (7.12.1825): лицо почернело, гроб лучше не вскрывать</li>
+              <li>Письмо Волконского (7.12.1825): лицо почернело, гроб лучше не вскрывать</li>
             </ul>
           </div>
           <div class="card gold a" style="--i:3">
@@ -457,11 +445,9 @@
               <text x="445" y="122" text-anchor="middle" font-size="19" font-weight="700" fill="#1d2433">Томск</text>
               <text x="425" y="200" text-anchor="middle" font-size="16" fill="#5b6577">март 1837 —</text>
               <text x="425" y="220" text-anchor="middle" font-size="16" fill="#5b6577">прибыл старец</text>
-              <circle cx="270" cy="216" r="20" fill="#fff" stroke="#c8962e" stroke-width="3"/>
-              <text x="270" y="226" text-anchor="middle" font-size="26" font-weight="700" fill="#c8962e">?</text>
               <text x="260" y="404" text-anchor="middle" font-size="15" fill="#5b6577">Схема без масштаба</text>
             </svg>
-            <div class="cap"><i class="flag">🟡</i> Даты появления старца в источниках расходятся (1836 / 1837)</div>
+            <div class="cap">Даты появления старца в источниках расходятся (1836 / 1837)</div>
           </div>
         </div>
       </div>
@@ -492,7 +478,7 @@
             <ul class="dots">
               <li>Умер 20 января 1864 г. (1 февраля по н. ст.)</li>
               <li>Похоронен у Алексеевского монастыря в Томске</li>
-              <li><i class="flag">🟡</i> 1984 — причислен Церковью к святым</li>
+              <li>1984 — причислен Церковью к святым</li>
             </ul>
           </div>
         </div>
@@ -545,11 +531,11 @@
           </div>
           <div class="card gold a" style="--i:2">
             <h3>Против</h3>
-            <p><i class="flag">🟡</i> <b>С. В. Мироненко</b> (ГАРФ): это разные люди, подмена невозможна</p>
+            <p><b>С. В. Мироненко</b> (ГАРФ): это разные люди, подмена невозможна</p>
           </div>
           <div class="card soft a" style="--i:3">
             <h3>ДНК</h3>
-            <p>Предлагают сравнить с образцами Марии Фёдоровны, матери царя. <i class="flag">🟡</i> Была ли экспертиза — неясно.</p>
+            <p>Предлагают сравнить с образцами Марии Фёдоровны, матери царя. Была ли экспертиза — неясно.</p>
           </div>
         </div>
         <div class="col">
@@ -641,15 +627,15 @@
     <div class="inner">
       <h2 class="a" style="--i:0">Список литературы</h2>
       <ol class="refs">
-        <li class="a" style="--i:1">Шильдер Н. К. Император Александр Первый, его жизнь и царствование. Т. 4. — СПб. : Изд. А. С. Суворина, 1898. — С. ? (уточнить).</li>
-        <li class="a" style="--i:1">Николай Михайлович, вел. кн. Легенда о кончине императора Александра I в Сибири в образе старца Федора Козьмича. — СПб. : [изд-во уточнить], 1907. — ? с.</li>
-        <li class="a" style="--i:2">Барятинский В. В. Царственный мистик (Император Александр I — Федор Козьмич). — СПб. : [изд-во уточнить], 1912. — ? с.</li>
-        <li class="a" style="--i:2">Сахаров А. Н. Александр I. — М. : Наука, 1998. — ? с.</li>
-        <li class="a" style="--i:3">Громыко М. М. Святой праведный старец Феодор Кузьмич Томский — Александр I Благословенный [Электронный ресурс] // Азбука веры. — URL: <span class="url">https://www.azbyka.ru/otechnik/Zhitija_svjatykh/svjatoj-pravednyj-starets-feodor-kuzmich-tomskij-aleksandr-1-blagoslovennyj/</span> (дата обращения: ?).</li>
-        <li class="a" style="--i:3">Громыко М. М. К жизнеописанию праведного старца // Традиции (ИЭА РАН). — Год, №, с. уточнить. — URL: <span class="url">https://journals.iea.ras.ru/traditions/issue/download/101/515</span> (дата обращения: ?).</li>
-        <li class="a" style="--i:4">Тайная жизнь императора: 5 мифов и фактов об Александре I // Вокруг света. — URL: <span class="url">https://www.vokrugsveta.ru/history/tainaya-zhizn-imperatora-imperatora-5-mifov-i-faktov-ob-aleksandre-i-id6355161/</span> (дата обращения: ?).</li>
-        <li class="a" style="--i:4">Что мешает разгадать тайну Александра I и старца Федора Кузьмича // Собеседник (Рамблер). — URL: <span class="url">https://weekend.rambler.ru/read/43602692/</span> (дата обращения: ?).</li>
-        <li class="a" style="--i:5">Александра Первого и Федора Томского «породнили» по почерку // Московский комсомолец. — 2015. — 23 июля. — URL: <span class="url">https://www.mk.ru/social/2015/07/23/aleksandra-pervogo-i-fedora-tomskogo-porodnili-po-pocherku-pyat-let-nazad.html</span> (дата обращения: ?).</li>
+        <li class="a" style="--i:1">Шильдер Н. К. Император Александр Первый, его жизнь и царствование. Т. 4. — СПб. : Изд. А. С. Суворина, 1898.</li>
+        <li class="a" style="--i:1">Николай Михайлович, вел. кн. Легенда о кончине императора Александра I в Сибири в образе старца Федора Козьмича. — СПб., 1907.</li>
+        <li class="a" style="--i:2">Барятинский В. В. Царственный мистик (Император Александр I — Федор Козьмич). — СПб., 1912.</li>
+        <li class="a" style="--i:2">Сахаров А. Н. Александр I. — М. : Наука, 1998.</li>
+        <li class="a" style="--i:3">Громыко М. М. Святой праведный старец Феодор Кузьмич Томский — Александр I Благословенный [Электронный ресурс] // Азбука веры. — URL: <span class="url">https://www.azbyka.ru/otechnik/Zhitija_svjatykh/svjatoj-pravednyj-starets-feodor-kuzmich-tomskij-aleksandr-1-blagoslovennyj/</span>.</li>
+        <li class="a" style="--i:3">Громыко М. М. К жизнеописанию праведного старца // Традиции (ИЭА РАН). — URL: <span class="url">https://journals.iea.ras.ru/traditions/issue/download/101/515</span>.</li>
+        <li class="a" style="--i:4">Тайная жизнь императора: 5 мифов и фактов об Александре I // Вокруг света. — URL: <span class="url">https://www.vokrugsveta.ru/history/tainaya-zhizn-imperatora-imperatora-5-mifov-i-faktov-ob-aleksandre-i-id6355161/</span>.</li>
+        <li class="a" style="--i:4">Что мешает разгадать тайну Александра I и старца Федора Кузьмича // Собеседник (Рамблер). — URL: <span class="url">https://weekend.rambler.ru/read/43602692/</span>.</li>
+        <li class="a" style="--i:5">Александра Первого и Федора Томского «породнили» по почерку // Московский комсомолец. — 2015. — 23 июля. — URL: <span class="url">https://www.mk.ru/social/2015/07/23/aleksandra-pervogo-i-fedora-tomskogo-porodnili-po-pocherku-pyat-let-nazad.html</span>.</li>
       </ol>
     </div>
     <div class="footer"><span><b>Вопрос:</b> Был ли Федор Кузьмич императором Александром I?</span><span>8 / 8</span></div>
@@ -659,10 +645,10 @@
 </div>
 
 <div class="controls" id="controls">
-  <button id="prev" type="button" aria-label="Предыдущий слайд">← Назад</button>
+  <button id="prev" type="button" aria-label="Предыдущий слайд">Назад</button>
   <div class="progress"><i id="bar"></i></div>
   <span id="count">1 / 8</span>
-  <button id="next" type="button" aria-label="Следующий слайд">Вперёд →</button>
+  <button id="next" type="button" aria-label="Следующий слайд">Вперёд</button>
 </div>
 
 <script>
@@ -751,7 +737,7 @@
     if (anim || Math.abs(tg - cam) > 0.4) raf = requestAnimationFrame(loop);
     else { cam = tg; render(); last = 0; if (busyEnd) busyEnd(); }
   }
-  var busyEnd = null;
+  var busyEnd = null, layoutDone = false;
   function kick() { if (!raf) raf = requestAnimationFrame(loop); }
 
   /* ================= переходы ================= */
@@ -780,12 +766,11 @@
         rot = spinTo + (rf - spinTo) * 0; ax = XG + drift;
       } else {
         ay = y1; rot = rf; ax = XG + drift;
-        prog = b; if (!shown) slides[b].classList.add('shown');
+        prog = b; if (!shown) { shown = true; emerge(b); }
         return true;
       }
       var p = smooth((t - wob * 0.5) / (T + 0.35));
       prog = a + (b - a) * p;
-      if (!shown && p > 0.6) { shown = true; slides[b].classList.add('shown'); }
       return false;
     };
   }
@@ -795,9 +780,40 @@
       var p = smooth(t / 1.0);
       ay = y0 + (y1 - y0) * p; rot = r0 + (r1 - r0) * p; ax = x0 + (XG - x0) * p;
       prog = a + (b - a) * p;
-      if (!shown && p > 0.6) { shown = true; slides[b].classList.add('shown'); }
-      return t >= 1.0;
+      if (t >= 1.0) { prog = b; emerge(b); return true; }
+      return false;
     };
+  }
+
+  /* ===== текст появляется из яблока ===== */
+  var VS = 1;
+  function items(i) { return Array.prototype.slice.call(slides[i].querySelectorAll('.a, .footer')); }
+  function hideContent(i, fade) {
+    items(i).forEach(function (e) {
+      e.style.transition = fade ? 'opacity .25s ease, transform .35s ease-in' : 'none';
+      e.style.opacity = '0';
+      if (fade) e.style.transform = 'scale(.96)';
+    });
+  }
+  function showNow(i) {
+    items(i).forEach(function (e) { e.style.transition = 'none'; e.style.transform = 'none'; e.style.opacity = '1'; });
+  }
+  function emerge(i) {
+    if (reduce) { showNow(i); return; }
+    var list = items(i), axs = ax, ays = ay - target();
+    list.forEach(function (e) { e.style.transition = 'none'; e.style.transform = 'none'; e.style.opacity = '0'; });
+    var rects = list.map(function (e) { return e.getBoundingClientRect(); });
+    list.forEach(function (e, k) {
+      var r = rects[k], dx = (axs - (r.left + r.right) / 2) / VS, dy = (ays - (r.top + r.bottom) / 2) / VS;
+      e.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(.04)';
+    });
+    void slides[i].offsetWidth;
+    list.forEach(function (e, k) {
+      var d = (k * 0.075).toFixed(3) + 's';
+      e.style.transition = 'transform .85s cubic-bezier(.18,.85,.25,1) ' + d + ', opacity .35s ease ' + d;
+      e.style.transform = 'none';
+      e.style.opacity = '1';
+    });
   }
 
   var busy = false;
@@ -806,13 +822,13 @@
     var from = cur; cur = to; ui();
     if (reduce) {
       ay = perch[to]; ax = XG; rot = restRot[to]; prog = to; cam = target();
-      slides[to].classList.add('shown'); render(); return;
+      hideContent(from, false); render(); showNow(to); return;
     }
     busy = true;
+    hideContent(from, true);
     anim = { t0: performance.now(), step: to > from ? fall(from, to) : rise(from, to) };
     busyEnd = function () {
       busyEnd = null; busy = false;
-      slides.forEach(function (s, i) { if (i !== cur) s.classList.remove('shown'); });
     };
     last = 0; kick();
   }
@@ -829,6 +845,7 @@
     var ch = controls.offsetHeight;
     var w = W > 700 ? W * 0.84 : W - 24;
     var s = Math.min(w / 1280, (H - ch - 44) / 720);
+    VS = s;
     vp.style.transform = 'scale(' + s + ')';
     vp.style.margin = ((720 * s - 720) / 2) + 'px ' + ((1280 * s - 1280) / 2) + 'px';
   }
@@ -839,6 +856,8 @@
     if (anim) { anim = null; busy = false; prog = cur; }
     ax = XG; ay = perch[cur]; rot = restRot[cur]; prog = cur; cam = target();
     render();
+    if (layoutDone) showNow(cur);
+    layoutDone = true;
   }
 
   prev.addEventListener('click', function () { go(cur - 1); });
@@ -874,7 +893,8 @@
 
   lastW = window.innerWidth; lastH = window.innerHeight;
   layout(); ui();
-  setTimeout(function () { slides[0].classList.add('shown'); }, 200);
+  slides.forEach(function (sl, i) { hideContent(i, false); });
+  setTimeout(function () { emerge(0); }, 450);
 
   window.__deck = { go: go, get cur() { return cur; }, get busy() { return busy; }, get apple() { return { x: ax, y: ay - cam, cam: cam, perch: perch, R: R }; } };
 })();
