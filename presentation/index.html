@@ -57,9 +57,10 @@
     visibility: hidden;
     transition: transform .9s cubic-bezier(.65, .05, .3, 1), filter .9s ease, visibility 0s linear .9s;
   }
+  .slide:first-child { transform: none; visibility: visible; }
   .slide.active   { transform: rotateY(0deg);   visibility: visible; transition-delay: 0s, 0s, 0s; filter: none; }
-  .slide.left     { transform: rotateY(-90deg); filter: brightness(.75); }
-  .slide.right    { transform: rotateY(90deg);  filter: brightness(.75); }
+  .slide.left, .js .slide.left:first-child { transform: rotateY(-90deg); filter: brightness(.75); }
+  .slide.right, .js .slide.right:first-child { transform: rotateY(90deg);  filter: brightness(.75); }
   .slide.leaving  { visibility: visible; }
   .no-anim .slide { transition: none !important; }
 
@@ -104,17 +105,17 @@
   .flag { font-style: normal; white-space: nowrap; }
 
   /* ---------- появление элементов ---------- */
-  .a {
+  .js .a {
     opacity: 0; transform: translateY(18px);
     transition: opacity .6s ease, transform .6s cubic-bezier(.2, .7, .3, 1);
     transition-delay: 0s;
   }
-  .slide.shown .a {
+  .js .slide.shown .a {
     opacity: 1; transform: none;
     transition-delay: calc(.5s + var(--i, 0) * .16s);
   }
-  .a.from-right { transform: translateX(26px); }
-  .slide.shown .a.from-right { transform: none; }
+  .js .a.from-right { transform: translateX(26px); }
+  .js .slide.shown .a.from-right { transform: none; }
 
   /* ---------- титульный ---------- */
   .title-cols { grid-template-columns: 1.15fr 1fr; }
@@ -188,7 +189,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .slide { transition: visibility 0s !important; }
-    .a, .slide.shown .a { transition: none !important; transform: none !important; }
+    .js .a, .js .slide.shown .a { transition: none !important; transform: none !important; }
   }
 </style>
 </head>
@@ -597,6 +598,7 @@
 
 <script>
 (function () {
+  document.documentElement.classList.add('js');
   var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
   var vp = document.getElementById('viewport');
   var deck = document.getElementById('deck');
@@ -620,7 +622,6 @@
     next.disabled = cur === slides.length - 1;
     count.textContent = (cur + 1) + ' / ' + slides.length;
     bar.style.width = ((cur + 1) / slides.length * 100) + '%';
-    if (location.hash !== '#' + (cur + 1)) history.replaceState(null, '', '#' + (cur + 1));
   }
 
   function place(i) {
@@ -646,9 +647,10 @@
     from.classList.add(fwd ? 'left' : 'right', 'leaving');
     dst.classList.remove('left', 'right');
     dst.classList.add('active');
-    cur = to; ui();
+    cur = to;
     requestAnimationFrame(function () { dst.classList.add('shown'); });
     setTimeout(function () { from.classList.remove('leaving'); busy = false; }, 920);
+    ui();
   }
 
   prev.addEventListener('click', function () { go(cur - 1); });
@@ -661,8 +663,19 @@
   });
   window.addEventListener('resize', fit);
 
-  var start = parseInt((location.hash || '').slice(1), 10);
-  cur = start >= 1 && start <= slides.length ? start - 1 : 0;
+  // свайп на планшете и телефоне
+  var tx = null, ty = null;
+  document.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 1) { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (tx === null) return;
+    var dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    tx = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(cur + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+
+  cur = 0;
   document.body.classList.add('no-anim');
   place(cur); fit(); ui();
   void document.body.offsetWidth;
