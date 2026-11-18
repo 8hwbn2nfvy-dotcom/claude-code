@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Александр I и Федор Кузьмич</title>
+<style>
+  :root {
+    --blue: #1f4e9c;
+    --blue-dark: #163a76;
+    --blue-soft: #e8eef9;
+    --line: #c9d5ea;
+    --text: #1d2433;
+    --muted: #5b6577;
+    --bg: #f4f6fa;
+    --paper: #ffffff;
+    --accent: #c8962e;
+    --font: Calibri, Carlito, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #dfe5ef;
+    font-family: var(--font);
+    color: var(--text);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ---------- сцена и 3D ---------- */
+  .viewport {
+    width: 1280px; height: 720px;
+    position: relative;
+    transform-origin: center center;
+    flex: none;
+  }
+  .deck {
+    position: absolute; inset: 0;
+    perspective: 2200px;
+    perspective-origin: 50% 50%;
+    transition: transform .45s ease;
+  }
+  .deck.moving { transform: scale(.84); }
+  .slide {
+    position: absolute; inset: 0;
+    background: var(--paper);
+    border-radius: 6px;
+    box-shadow: 0 18px 50px rgba(20, 40, 80, .18);
+    overflow: hidden;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform-origin: 50% 50% -640px;   /* центр куба */
+    transform: rotateY(90deg);
+    visibility: hidden;
+    transition: transform .9s cubic-bezier(.65, .05, .3, 1), filter .9s ease, visibility 0s linear .9s;
+  }
+  .slide.active   { transform: rotateY(0deg);   visibility: visible; transition-delay: 0s, 0s, 0s; filter: none; }
+  .slide.left     { transform: rotateY(-90deg); filter: brightness(.75); }
+  .slide.right    { transform: rotateY(90deg);  filter: brightness(.75); }
+  .slide.leaving  { visibility: visible; }
+  .no-anim .slide { transition: none !important; }
+
+  /* ---------- оформление слайда ---------- */
+  .topbar { position: absolute; left: 0; right: 0; top: 0; height: 16px; background: var(--blue); }
+  .topbar::after { content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 4px; background: var(--accent); opacity: .85; }
+  .inner { position: absolute; left: 64px; right: 64px; top: 48px; bottom: 58px; display: flex; flex-direction: column; }
+  h2 {
+    font-size: 40px; font-weight: 700; color: var(--blue-dark);
+    line-height: 1.15; padding-bottom: 12px; margin-bottom: 22px;
+    border-bottom: 2px solid var(--line);
+  }
+  .cols { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; min-height: 0; }
+  .col { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  .col.center { justify-content: center; }
+
+  .footer {
+    position: absolute; left: 64px; right: 64px; bottom: 16px; height: 26px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 15px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 6px;
+  }
+  .footer b { color: var(--blue); font-weight: 700; }
+
+  .card {
+    background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px;
+    padding: 14px 18px; border-left: 6px solid var(--blue);
+  }
+  .card h3 { font-size: 20px; color: var(--blue-dark); margin-bottom: 6px; }
+  .card p, .card li { font-size: 19px; line-height: 1.32; }
+  .card.soft { background: var(--blue-soft); }
+  .card.gold { border-left-color: var(--accent); }
+  ul.dots { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  ul.dots li { position: relative; padding-left: 20px; }
+  ul.dots li::before { content: ""; position: absolute; left: 2px; top: .55em; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); }
+
+  .frame {
+    border: 2px solid var(--line); border-radius: 12px; background: #fbfcfe;
+    padding: 14px; height: 100%; display: flex; flex-direction: column;
+  }
+  .frame svg { width: 100%; flex: 1; min-height: 0; display: block; }
+  .frame .cap { text-align: center; font-size: 16px; color: var(--muted); padding-top: 8px; }
+  .flag { font-style: normal; white-space: nowrap; }
+
+  /* ---------- появление элементов ---------- */
+  .a {
+    opacity: 0; transform: translateY(18px);
+    transition: opacity .6s ease, transform .6s cubic-bezier(.2, .7, .3, 1);
+    transition-delay: 0s;
+  }
+  .slide.shown .a {
+    opacity: 1; transform: none;
+    transition-delay: calc(.5s + var(--i, 0) * .16s);
+  }
+  .a.from-right { transform: translateX(26px); }
+  .slide.shown .a.from-right { transform: none; }
+
+  /* ---------- титульный ---------- */
+  .title-cols { grid-template-columns: 1.15fr 1fr; }
+  .title-main { font-size: 66px; line-height: 1.05; font-weight: 700; color: var(--blue-dark); }
+  .title-sub  { font-size: 30px; color: var(--blue); margin-top: 6px; }
+  .title-line { width: 120px; height: 5px; background: var(--accent); border-radius: 3px; margin: 8px 0; }
+  .author p { font-size: 22px; line-height: 1.4; }
+  .author .lbl { color: var(--muted); font-size: 17px; }
+  .photos { display: grid; grid-template-columns: 1fr 44px 1fr; align-items: center; height: 100%; gap: 8px; }
+  .ph {
+    border: 2px dashed #9fb2d4; border-radius: 10px; background: var(--blue-soft);
+    height: 330px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 10px; padding: 10px; color: var(--blue-dark);
+  }
+  .ph .ins { font-size: 18px; font-weight: 700; letter-spacing: .02em; }
+  .ph .who { font-size: 16px; color: var(--muted); }
+  .qmark { font-size: 46px; font-weight: 700; color: var(--accent); text-align: center; }
+
+  /* ---------- вопрос ---------- */
+  .question {
+    background: var(--blue); color: #fff; border-radius: 12px;
+    padding: 20px 24px; min-height: 120px; display: flex; flex-direction: column; justify-content: center;
+  }
+  .question .lbl { font-size: 16px; text-transform: uppercase; letter-spacing: .08em; opacity: .85; margin-bottom: 6px; }
+  .question .q { font-size: 30px; font-weight: 700; line-height: 1.22; }
+  ol.plan { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  ol.plan li {
+    display: flex; align-items: center; gap: 14px; font-size: 22px;
+    background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 14px;
+  }
+  ol.plan .n {
+    flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--blue); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 19px;
+  }
+
+  /* ---------- итог ---------- */
+  .answer { font-size: 32px; line-height: 1.25; font-weight: 700; color: var(--blue-dark); }
+  .answer span { color: var(--text); font-weight: 400; display: block; font-size: 24px; margin-top: 12px; }
+  .main-idea { background: var(--blue-soft); border: 1.5px solid var(--line); border-left: 6px solid var(--accent); border-radius: 10px; padding: 16px 20px; }
+  .main-idea h3 { font-size: 18px; text-transform: uppercase; letter-spacing: .07em; color: var(--accent); margin-bottom: 6px; }
+  .main-idea p { font-size: 22px; line-height: 1.32; }
+
+  /* ---------- литература ---------- */
+  ol.refs { columns: 2; column-gap: 36px; padding-left: 0; list-style: none; counter-reset: r; }
+  ol.refs li {
+    counter-increment: r; break-inside: avoid; position: relative;
+    font-size: 15px; line-height: 1.3; padding: 7px 10px 7px 34px; margin-bottom: 8px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fbfcfe;
+  }
+  ol.refs li::before {
+    content: counter(r); position: absolute; left: 8px; top: 7px; width: 19px; height: 19px; border-radius: 50%;
+    background: var(--blue); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  ol.refs .url { word-break: break-all; color: var(--blue); }
+  .refs-note { font-size: 15px; color: var(--muted); margin-top: 4px; }
+
+  /* ---------- управление ---------- */
+  .controls {
+    display: flex; align-items: center; gap: 14px; margin-top: 14px; flex: none;
+    font-size: 16px; color: var(--muted);
+    position: relative; z-index: 10;
+  }
+  .controls button {
+    font-family: var(--font); font-size: 16px; font-weight: 700; cursor: pointer;
+    background: var(--blue); color: #fff; border: 0; border-radius: 8px; padding: 8px 18px;
+  }
+  .controls button:disabled { background: #a9b6cc; cursor: default; }
+  .controls button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .progress { width: 220px; height: 6px; background: #c7d1e2; border-radius: 3px; overflow: hidden; }
+  .progress i { display: block; height: 100%; background: var(--blue); width: 12.5%; transition: width .6s ease; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slide { transition: visibility 0s !important; }
+    .a, .slide.shown .a { transition: none !important; transform: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="viewport" id="viewport">
+<div class="deck" id="deck">
+
+  <!-- 1. Титульный -->
+  <section class="slide" aria-label="Слайд 1">
+    <div class="topbar"></div>
+    <div class="inner">
+      <div class="cols title-cols">
+        <div class="col center" style="gap:20px">
+          <div class="title-main a" style="--i:0">Император<br>и старец</div>
+          <div class="title-line a" style="--i:1"></div>
+          <div class="title-sub a" style="--i:1">Александр I и тайна Федора Кузьмича</div>
+          <div class="author card soft a" style="--i:2; margin-top:22px">
+            <p class="lbl">Выполнил</p>
+            <p><b>Шишкин Алексей Константинович</b></p>
+            <p class="lbl" style="margin-top:6px">Группа</p>
+            <p><b>26-01 БСТ</b></p>
+          </div>
+        </div>
+        <div class="col center">
+          <div class="frame a from-right" style="--i:3; height:auto">
+            <div class="photos">
+              <div class="ph"><div class="ins">вставить фото</div><div class="who">Портрет Александра I<br>1777–1825</div></div>
+              <div class="qmark">=?</div>
+              <div class="ph"><div class="ins">вставить фото</div><div class="who">Портрет старца<br>Федора Кузьмича<br>умер в 1864</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span><b>Вопрос:</b> Был ли Федор Кузьмич императором Александром I?</span><span>1 / 8</span></div>
+  </section>
+
+  <!-- 2. Вопрос и план -->
+  <section class="slide" aria-label="Слайд 2">
+    <div class="topbar"></div>
+    <div class="inner">
+      <h2 class="a" style="--i:0">Вопрос и план</h2>
+      <div class="cols">
+        <div class="col">
+          <div class="question a" style="--i:1">
+            <div class="lbl">Вопрос презентации</div>
+            <div class="q">Был ли Федор Кузьмич императором Александром I?</div>
+          </div>
+          <ol class="plan">
+            <li class="a" style="--i:2"><span class="n">1</span>Характер Александра I</li>
+            <li class="a" style="--i:3"><span class="n">2</span>Версия про Сибирь</li>
+            <li class="a" style="--i:4"><span class="n">3</span>Кто такой Федор Кузьмич</li>
+            <li class="a" style="--i:5"><span class="n">4</span>Мнения исследователей</li>
+          </ol>
+        </div>
+        <div class="col">
+          <div class="frame a from-right" style="--i:3">
+            <svg viewBox="0 0 520 420" role="img" aria-label="Схема: смерть в Таганроге в 1825 году и появление старца в Томске в 1837 году">
+              <text x="260" y="34" text-anchor="middle" font-size="24" font-weight="700" fill="#163a76">Одна жизнь или две?</text>
+              <!-- Таганрог -->
+              <rect x="20" y="150" width="190" height="150" rx="12" fill="#e8eef9" stroke="#1f4e9c" stroke-width="2"/>
+              <text x="115" y="192" text-anchor="middle" font-size="34" font-weight="700" fill="#1f4e9c">1825</text>
+              <text x="115" y="228" text-anchor="middle" font-size="20" font-weight="700" fill="#1d2433">Таганрог</text>
+              <text x="115" y="256" text-anchor="middle" font-size="17" fill="#5b6577">смерть</text>
+              <text x="115" y="278" text-anchor="middle" font-size="17" fill="#5b6577">Александра I</text>
+              <!-- Томск -->
+              <rect x="310" y="150" width="190" height="150" rx="12" fill="#fdf6e7" stroke="#c8962e" stroke-width="2"/>
+              <text x="405" y="192" text-anchor="middle" font-size="34" font-weight="700" fill="#a87818">1837</text>
+              <text x="405" y="228" text-anchor="middle" font-size="20" font-weight="700" fill="#1d2433">Томск</text>
+              <text x="405" y="256" text-anchor="middle" font-size="17" fill="#5b6577">появление</text>
+              <text x="405" y="278" text-anchor="middle" font-size="17" fill="#5b6577">старца</text>
+              <!-- дуга -->
+              <path d="M115 145 C 160 60, 360 60, 405 145" fill="none" stroke="#1f4e9c" stroke-width="3" stroke-dasharray="9 8"/>
+              <polygon points="405,147 396,128 414,130" fill="#1f4e9c"/>
+              <circle cx="260" cy="82" r="26" fill="#fff" stroke="#c8962e" stroke-width="3"/>
+              <text x="260" y="93" text-anchor="middle" font-size="32" font-weight="700" fill="#c8962e">?</text>
+              <text x="260" y="360" text-anchor="middle" font-size="19" fill="#1d2433">Между событиями — около 12 лет</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span><b>Вопрос:</b> Был ли Федор Кузьмич императором Александром I?</span><span>2 / 8</span></div>
+  </section>
+
+  <!-- 3. Характер -->
+  <section class="slide" aria-label="Слайд 3">
+    <div class="topbar"></div>
+    <div class="inner">
+      <h2 class="a" style="--i:0">Характер Александра I</h2>
+      <div class="cols">
+        <div class="col">
+          <div class="card a" style="--i:1">
+            <h3>Воспитание</h3>
+            <ul class="dots">
+              <li>Растила бабушка — Екатерина II</li>
+              <li>Рос «между двух миров»: Зимний дворец и Гатчина отца</li>
+            </ul>
+          </div>
+          <div class="card a" style="--i:2">
+            <h3>Правление</h3>
+            <ul class="dots">
+              <li>Начало — реформы Сперанского</li>
+              <li>После 1812 г. — Аракчеев и консервативный курс</li>
+              <li>После войны окрепла личная вера</li>
+            </ul>
+          </div>
+          <div class="card gold soft a" style="--i:3">
+            <p><b>«Сфинкс, не разгаданный до гроба»</b></p>
+            <p style="color:var(--muted); font-size:17px">— поэт П. А. Вяземский о царе</p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="frame a from-right" style="--i:2">
+            <svg viewBox="0 0 520 440" role="img" aria-label="Таймлайн жизни Александра I">
+              <text x="260" y="32" text-anchor="middle" font-size="22" font-weight="700" fill="#163a76">Жизнь Александра I</text>
+              <line x1="110" y1="70" x2="110" y2="410" stroke="#c9d5ea" stroke-width="5" stroke-linecap="round"/>
+              <g font-size="19">
+                <circle cx="110" cy="80" r="11" fill="#1f4e9c"/>
+                <text x="50" y="86" text-anchor="middle" font-weight="700" fill="#1f4e9c">1777</text>
+                <text x="138" y="86" fill="#1d2433">Рождение</text>
+
+                <circle cx="110" cy="160" r="11" fill="#1f4e9c"/>
+                <text x="50" y="166" text-anchor="middle" font-weight="700" fill="#1f4e9c">1801</text>
+                <text x="138" y="166" fill="#1d2433">Становится императором</text>
+
+                <circle cx="110" cy="240" r="11" fill="#1f4e9c"/>
+                <text x="50" y="246" text-anchor="middle" font-weight="700" fill="#1f4e9c">1812</text>
+                <text x="138" y="246" fill="#1d2433">Война с Наполеоном</text>
+
+                <circle cx="110" cy="320" r="11" fill="#1f4e9c"/>
+                <text x="50" y="326" text-anchor="middle" font-weight="700" fill="#1f4e9c">1814</text>
+                <text x="138" y="326" fill="#1d2433">Въезд в Париж во главе</text>
+                <text x="138" y="349" fill="#1d2433">союзных войск</text>
+
+                <circle cx="110" cy="400" r="13" fill="#c8962e"/>
+                <text x="50" y="406" text-anchor="middle" font-weight="700" fill="#a87818">1825</text>
+                <text x="138" y="406" fill="#1d2433" font-weight="700">Смерть в Таганроге, 47 лет</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span><b>Вопрос:</b> Был ли Федор Кузьмич императором Александром I?</span><span>3 / 8</span></div>
+  </section>
+
+  <!-- 4. Сибирь -->
+  <section class="slide" aria-label="Слайд 4">
+    <div class="topbar"></div>
+    <div class="inner">
+      <h2 class="a" style="--i:0">Версия про Сибирь</h2>
+      <div class="cols">
+        <div class="col">
+          <div class="card soft a" style="--i:1">
+            <p><b>Легенда:</b> смерть в Таганроге инсценирована, а царь ушёл в Сибирь под видом старца.</p>
+          </div>
+          <div class="card a" style="--i:2">
+            <h3>Почему поверили</h3>
+            <ul class="dots">
+              <li>Внезапная смерть крепкого человека</li>
+              <li>Вина за гибель отца — желание искупить</li>
+              <li>Сам говорил, что хочет отойти от власти</li>
+              <li><i class="flag">🟡</i> Письмо Волконского (7.12.1825): лицо почернело, гроб лучше не вскрывать</li>
+            </ul>
+          </div>
+          <div class="card gold a" style="--i:3">
+            <h3>Но</h3>
+            <p>Прямых документов о подмене нет. «Вокруг света»: версия скорее неверна.</p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="frame a from-right" style="--i:2">
+            <svg viewBox="0 0 520 420" role="img" aria-label="Схема пути из Таганрога в Томск">
+              <text x="260" y="30" text-anchor="middle" font-size="22" font-weight="700" fill="#163a76">Путь легенды</text>
+              <!-- условный контур -->
+              <path d="M30 120 C 90 70, 200 80, 270 70 S 430 60, 495 95 L 495 330 C 420 360, 330 345, 250 370 S 90 380, 30 345 Z"
+                    fill="#eef3fb" stroke="#c9d5ea" stroke-width="2"/>
+              <!-- Урал -->
+              <path d="M262 100 L 270 140 L 258 180 L 268 220 L 256 265 L 266 310" fill="none" stroke="#b9a37a" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 7"/>
+              <text x="282" y="290" font-size="15" fill="#8a7550">Урал</text>
+              <!-- маршрут -->
+              <path d="M110 300 C 170 240, 250 210, 330 200 S 420 170, 440 160" fill="none" stroke="#1f4e9c" stroke-width="4" stroke-dasharray="11 9"/>
+              <polygon points="443,158 424,160 432,176" fill="#1f4e9c"/>
+              <!-- Петербург -->
+              <circle cx="95" cy="130" r="8" fill="#5b6577"/>
+              <text x="110" y="136" font-size="17" fill="#5b6577">Петербург</text>
+              <!-- Таганрог -->
+              <circle cx="110" cy="300" r="12" fill="#1f4e9c"/>
+              <text x="58" y="336" font-size="19" font-weight="700" fill="#1d2433">Таганрог</text>
+              <text x="58" y="358" font-size="17" fill="#5b6577">1825 — смерть царя</text>
+              <!-- Томск -->
+              <circle cx="445" cy="155" r="12" fill="#c8962e"/>
+              <text x="445" y="122" text-anchor="middle" font-size="19" font-weight="700" fill="#1d2433">Томск</text>
+              <text x="425" y="200" text-anchor="middle" font-size="16" fill="#5b6577">март 1837 —</text>
+              <text x="425" y="220" text-anchor="middle" font-size="16" fill="#5b6577">прибыл старец</text>
+              <circle cx="270" cy="216" r="20" fill="#fff" stroke="#c8962e" stroke-width="3"/>
+              <text x="270" y="226" text-anchor="middle" font-size="26" font-weight="700" fill="#c8962e">?</text>
+              <text x="260" y="404" text-anchor="middle" font-size="15" fill="#5b6577">Схема без масштаба</text>
+            </svg>
+            <div class="cap"><i class="flag">🟡</i> Даты появления старца в источниках расходятся (1836 / 1837)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span><b>Вопрос:</b> Был ли Федор Кузьмич императором Александром I?</span><span>4 / 8</span></div>
+  </section>
+
+  <!-- 5. Федор Кузьмич -->
+  <section class="slide" aria-label="Слайд 5">
+    <div class="topbar"></div>
+    <div class="inner">
+      <h2 class="a" style="--i:0">Кто такой Федор Кузьмич</h2>
+      <div class="cols">
+        <div class="col">
+          <div class="card a" style="--i:1">
+            <h3>Старец-странник</h3>
+            <ul class="dots">
+              <li>Жил уединённо</li>
+              <li>Белоярская: избушка от благодетеля Семёна Сидорова</li>
+            </ul>
+          </div>
+          <div class="card soft a" style="--i:2">
+            <h3>Загадочный эпизод</h3>
+            <p>Казак Березин, служивший в Петербурге, пристально посмотрел на старца — и тот поспешил уйти.</p>
+          </div>
+          <div class="card a" style="--i:3">
+            <h3>Конец жизни</h3>
+            <ul class="dots">
+              <li>Умер 20 января 1864 г. (1 февраля по н. ст.)</li>
+              <li>Похоронен у Алексеевского монастыря в Томске</li>
+              <li><i class="flag">🟡</i> 1984 — причислен Церковью к святым</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col">
+          <div class="frame a from-right" style="--i:2">
+            <svg viewBox="0 0 520 420" role="img" aria-label="Сравнение возраста старца и Александра I в 1864 году">
+              <text x="260" y="32" text-anchor="middle" font-size="22" font-weight="700" fill="#163a76">Возраст в 1864 году</text>
+              <g font-size="18">
+                <!-- шкала -->
+                <line x1="40" y1="330" x2="490" y2="330" stroke="#c9d5ea" stroke-width="2"/>
+                <!-- старец 80 -->
+                <rect x="60" y="118" width="110" height="212" rx="6" fill="#c8962e"/>
+                <text x="115" y="104" text-anchor="middle" font-size="30" font-weight="700" fill="#a87818">80</text>
+                <text x="115" y="358" text-anchor="middle" fill="#1d2433">Старец</text>
+                <text x="115" y="380" text-anchor="middle" font-size="16" fill="#5b6577">одни источники</text>
+                <!-- старец 88 -->
+                <rect x="205" y="97" width="110" height="233" rx="6" fill="#c8962e" opacity=".75"/>
+                <text x="260" y="83" text-anchor="middle" font-size="30" font-weight="700" fill="#a87818">88</text>
+                <text x="260" y="358" text-anchor="middle" fill="#1d2433">Старец</text>
+                <text x="260" y="380" text-anchor="middle" font-size="16" fill="#5b6577">другие источники</text>
+                <!-- Александр 86 -->
+                <rect x="350" y="102" width="110" height="228" rx="6" fill="#1f4e9c"/>
+                <text x="405" y="88" text-anchor="middle" font-size="30" font-weight="700" fill="#1f4e9c">86</text>
+                <text x="405" y="358" text-anchor="middle" fill="#1d2433">Александр I</text>
+                <text x="405" y="380" text-anchor="middle" font-size="16" fill="#5b6577">род. в 1777 г.</text>
+              </g>
+              <text x="260" y="410" text-anchor="middle" font-size="15" fill="#5b6577">Разница в возрасте — повод для спора</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span><b>Вопрос:</b> Был ли Федор Кузьмич императором Александром I?</span><span>5 / 8</span></div>
+  </section>
+
+  <!-- 6. Мнения -->
+  <section class="slide" aria-label="Слайд 6">
+    <div class="topbar"></div>
+    <div class="inner">
+      <h2 class="a" style="--i:0">Мнения исследователей</h2>
+      <div class="cols">
+        <div class="col">
+          <div class="card a" style="--i:1">
+            <h3>За тождество</h3>
+            <ul class="dots">
+              <li><b>М. М. Громыко:</b> подтверждено многими фактами</li>
+              <li><b>В. Фёдоров:</b> более 100 косвенных доказательств</li>
+              <li><b>С. Семёнова</b> (2015): почерки совпадают</li>
+            </ul>
+          </div>
+          <div class="card gold a" style="--i:2">
+            <h3>Против</h3>
+            <p><i class="flag">🟡</i> <b>С. В. Мироненко</b> (ГАРФ): это разные люди, подмена невозможна</p>
+          </div>
+          <div class="card soft a" style="--i:3">
+            <h3>ДНК</h3>
+            <p>Предлагают сравнить с образцами Марии Фёдоровны, матери царя. <i class="flag">🟡</i> Была ли экспертиза — неясно.</p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="frame a from-right" style="--i:2">
+            <svg viewBox="0 0 520 420" role="img" aria-label="Весы: аргументы за и против тождества">
+              <text x="260" y="32" text-anchor="middle" font-size="22" font-weight="700" fill="#163a76">Чаша весов</text>
+              <!-- стойка -->
+              <rect x="252" y="90" width="16" height="250" rx="4" fill="#5b6577"/>
+              <rect x="190" y="340" width="140" height="18" rx="6" fill="#5b6577"/>
+              <rect x="70" y="88" width="380" height="10" rx="5" fill="#5b6577"/>
+              <circle cx="260" cy="93" r="14" fill="#c8962e"/>
+              <!-- нити -->
+              <line x1="90" y1="98" x2="40" y2="200" stroke="#5b6577" stroke-width="2"/>
+              <line x1="90" y1="98" x2="140" y2="200" stroke="#5b6577" stroke-width="2"/>
+              <line x1="430" y1="98" x2="380" y2="200" stroke="#5b6577" stroke-width="2"/>
+              <line x1="430" y1="98" x2="480" y2="200" stroke="#5b6577" stroke-width="2"/>
+              <!-- чаши -->
+              <path d="M30 200 H150 Q150 238 90 238 Q30 238 30 200 Z" fill="#1f4e9c"/>
+              <path d="M370 200 H490 Q490 238 430 238 Q370 238 370 200 Z" fill="#c8962e"/>
+              <text x="90" y="272" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4e9c">ЗА</text>
+              <text x="90" y="296" text-anchor="middle" font-size="16" fill="#5b6577">косвенные</text>
+              <text x="90" y="316" text-anchor="middle" font-size="16" fill="#5b6577">признаки</text>
+              <text x="430" y="272" text-anchor="middle" font-size="20" font-weight="700" fill="#a87818">ПРОТИВ</text>
+              <text x="430" y="296" text-anchor="middle" font-size="16" fill="#5b6577">нет документов</text>
+              <text x="430" y="316" text-anchor="middle" font-size="16" fill="#5b6577">о подмене</text>
+              <text x="260" y="398" text-anchor="middle" font-size="19" font-weight="700" fill="#1d2433">Спор не закончен</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span><b>Вопрос:</b> Был ли Федор Кузьмич императором Александром I?</span><span>6 / 8</span></div>
+  </section>
+
+  <!-- 7. Итог (без заголовка) -->
+  <section class="slide" aria-label="Слайд 7">
+    <div class="topbar"></div>
+    <div class="inner">
+      <div class="cols" style="padding-top:10px">
+        <div class="col center" style="gap:24px">
+          <div class="answer a" style="--i:0">
+            Однозначного ответа нет.
+            <span>Версия о Сибири объясняет внезапную смерть царя, но документами не подтверждена.</span>
+          </div>
+          <div class="main-idea a" style="--i:2">
+            <h3>Главная мысль</h3>
+            <p>Характер Александра I дал почву для легенды. Тайна не разгадана — и в ней личность и легенда переплетаются в истории.</p>
+          </div>
+        </div>
+        <div class="col center">
+          <div class="frame a from-right" style="--i:1; height:auto">
+            <svg viewBox="0 0 520 470" role="img" aria-label="Схема: характер, легенда, нет документов, спор продолжается" style="height:470px; flex:none">
+              <defs>
+                <marker id="arr" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                  <path d="M0 0 L10 5 L0 10 Z" fill="#1f4e9c"/>
+                </marker>
+              </defs>
+              <g font-size="20" text-anchor="middle">
+                <rect x="110" y="16" width="300" height="70" rx="12" fill="#e8eef9" stroke="#1f4e9c" stroke-width="2"/>
+                <text x="260" y="47" font-weight="700" fill="#163a76">Характер царя</text>
+                <text x="260" y="72" font-size="16" fill="#5b6577">усталость, вина, вера</text>
+                <line x1="260" y1="88" x2="260" y2="122" stroke="#1f4e9c" stroke-width="3" marker-end="url(#arr)"/>
+
+                <rect x="110" y="130" width="300" height="70" rx="12" fill="#e8eef9" stroke="#1f4e9c" stroke-width="2"/>
+                <text x="260" y="161" font-weight="700" fill="#163a76">Легенда о Сибири</text>
+                <text x="260" y="186" font-size="16" fill="#5b6577">внезапная смерть, старец</text>
+                <line x1="260" y1="202" x2="260" y2="236" stroke="#1f4e9c" stroke-width="3" marker-end="url(#arr)"/>
+
+                <rect x="110" y="244" width="300" height="70" rx="12" fill="#e8eef9" stroke="#1f4e9c" stroke-width="2"/>
+                <text x="260" y="275" font-weight="700" fill="#163a76">Нет документов</text>
+                <text x="260" y="300" font-size="16" fill="#5b6577">только косвенные признаки</text>
+                <line x1="260" y1="316" x2="260" y2="350" stroke="#1f4e9c" stroke-width="3" marker-end="url(#arr)"/>
+
+                <rect x="110" y="358" width="300" height="80" rx="12" fill="#fdf6e7" stroke="#c8962e" stroke-width="2.5"/>
+                <text x="260" y="392" font-weight="700" fill="#a87818">Спор продолжается</text>
+                <text x="260" y="418" font-size="16" fill="#5b6577">тайна не разгадана</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span><b>Вопрос:</b> Был ли Федор Кузьмич императором Александром I?</span><span>7 / 8</span></div>
+  </section>
+
+  <!-- 8. Литература -->
+  <section class="slide" aria-label="Слайд 8">
+    <div class="topbar"></div>
+    <div class="inner">
+      <h2 class="a" style="--i:0">Список литературы</h2>
+      <ol class="refs">
+        <li class="a" style="--i:1"><i class="flag">🟡</i> Шильдер Н. К. Император Александр Первый, его жизнь и царствование. Т. 4. — СПб. : Изд. А. С. Суворина, 1898. — С. ? (уточнить).</li>
+        <li class="a" style="--i:1"><i class="flag">🟡</i> Николай Михайлович, вел. кн. Легенда о кончине императора Александра I в Сибири в образе старца Федора Козьмича. — СПб. : [изд-во уточнить], 1907. — ? с.</li>
+        <li class="a" style="--i:2"><i class="flag">🟡</i> Барятинский В. В. Царственный мистик (Император Александр I — Федор Козьмич). — СПб. : [изд-во уточнить], 1912. — ? с.</li>
+        <li class="a" style="--i:2"><i class="flag">🟡</i> Сахаров А. Н. Александр I. — М. : Наука, 1998. — ? с.</li>
+        <li class="a" style="--i:3"><i class="flag">🟡</i> Громыко М. М. Святой праведный старец Феодор Кузьмич Томский — Александр I Благословенный [Электронный ресурс] // Азбука веры. — URL: <span class="url">https://www.azbyka.ru/otechnik/Zhitija_svjatykh/svjatoj-pravednyj-starets-feodor-kuzmich-tomskij-aleksandr-1-blagoslovennyj/</span> (дата обращения: ?).</li>
+        <li class="a" style="--i:3"><i class="flag">🟡</i> Громыко М. М. К жизнеописанию праведного старца // Традиции (ИЭА РАН). — Год, №, с. уточнить. — URL: <span class="url">https://journals.iea.ras.ru/traditions/issue/download/101/515</span> (дата обращения: ?).</li>
+        <li class="a" style="--i:4"><i class="flag">🟡</i> Тайная жизнь императора: 5 мифов и фактов об Александре I // Вокруг света. — URL: <span class="url">https://www.vokrugsveta.ru/history/tainaya-zhizn-imperatora-imperatora-5-mifov-i-faktov-ob-aleksandre-i-id6355161/</span> (дата обращения: ?).</li>
+        <li class="a" style="--i:4"><i class="flag">🟡</i> Что мешает разгадать тайну Александра I и старца Федора Кузьмича // Собеседник (Рамблер). — URL: <span class="url">https://weekend.rambler.ru/read/43602692/</span> (дата обращения: ?).</li>
+        <li class="a" style="--i:5"><i class="flag">🟡</i> Александра Первого и Федора Томского «породнили» по почерку // Московский комсомолец. — 2015. — 23 июля. — URL: <span class="url">https://www.mk.ru/social/2015/07/23/aleksandra-pervogo-i-fedora-tomskogo-porodnili-po-pocherku-pyat-let-nazad.html</span> (дата обращения: ?).</li>
+      </ol>
+      <p class="refs-note a" style="--i:6"><i class="flag">🟡</i> — не проверено: издательства, страницы и даты обращения нужно сверить вручную.</p>
+    </div>
+    <div class="footer"><span><b>Вопрос:</b> Был ли Федор Кузьмич императором Александром I?</span><span>8 / 8</span></div>
+  </section>
+
+</div>
+</div>
+
+<div class="controls" id="controls">
+  <button id="prev" type="button" aria-label="Предыдущий слайд">← Назад</button>
+  <div class="progress"><i id="bar"></i></div>
+  <span id="count">1 / 8</span>
+  <button id="next" type="button" aria-label="Следующий слайд">Вперёд →</button>
+</div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var vp = document.getElementById('viewport');
+  var deck = document.getElementById('deck');
+  var controls = document.getElementById('controls');
+  var prev = document.getElementById('prev');
+  var next = document.getElementById('next');
+  var count = document.getElementById('count');
+  var bar = document.getElementById('bar');
+  var cur = 0, busy = false;
+
+  function fit() {
+    var h = window.innerHeight - controls.offsetHeight - 36;
+    var w = window.innerWidth - 24;
+    var s = Math.min(w / 1280, h / 720);
+    vp.style.transform = 'scale(' + s + ')';
+    vp.style.margin = ((720 * s - 720) / 2) + 'px ' + ((1280 * s - 1280) / 2) + 'px';
+  }
+
+  function ui() {
+    prev.disabled = cur === 0;
+    next.disabled = cur === slides.length - 1;
+    count.textContent = (cur + 1) + ' / ' + slides.length;
+    bar.style.width = ((cur + 1) / slides.length * 100) + '%';
+    if (location.hash !== '#' + (cur + 1)) history.replaceState(null, '', '#' + (cur + 1));
+  }
+
+  function place(i) {
+    slides.forEach(function (s, k) {
+      s.classList.remove('active', 'left', 'right', 'shown', 'leaving');
+      s.classList.add(k < i ? 'left' : k > i ? 'right' : 'active');
+    });
+  }
+
+  function go(to) {
+    if (busy || to < 0 || to >= slides.length || to === cur) return;
+    busy = true;
+    deck.classList.add('moving');
+    setTimeout(function () { deck.classList.remove('moving'); }, 470);
+    var from = slides[cur], dst = slides[to], fwd = to > cur;
+    // ставим входящий слайд на нужную грань куба без анимации
+    dst.style.transition = 'none';
+    dst.classList.remove('left', 'right', 'shown');
+    dst.classList.add(fwd ? 'right' : 'left');
+    void dst.offsetWidth;
+    dst.style.transition = '';
+    from.classList.remove('active', 'shown');
+    from.classList.add(fwd ? 'left' : 'right', 'leaving');
+    dst.classList.remove('left', 'right');
+    dst.classList.add('active');
+    cur = to; ui();
+    requestAnimationFrame(function () { dst.classList.add('shown'); });
+    setTimeout(function () { from.classList.remove('leaving'); busy = false; }, 920);
+  }
+
+  prev.addEventListener('click', function () { go(cur - 1); });
+  next.addEventListener('click', function () { go(cur + 1); });
+  document.addEventListener('keydown', function (e) {
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].indexOf(e.key) >= 0) { e.preventDefault(); go(cur + 1); }
+    else if (['ArrowLeft', 'PageUp', 'Backspace'].indexOf(e.key) >= 0) { e.preventDefault(); go(cur - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); go(0); }
+    else if (e.key === 'End') { e.preventDefault(); go(slides.length - 1); }
+  });
+  window.addEventListener('resize', fit);
+
+  var start = parseInt((location.hash || '').slice(1), 10);
+  cur = start >= 1 && start <= slides.length ? start - 1 : 0;
+  document.body.classList.add('no-anim');
+  place(cur); fit(); ui();
+  void document.body.offsetWidth;
+  document.body.classList.remove('no-anim');
+  setTimeout(function () { slides[cur].classList.add('shown'); }, 60);
+
+  window.__deck = { go: go, get cur() { return cur; } };
+})();
+</script>
+</body>
+</html>
