@@ -7,12 +7,16 @@
 Всё (библиотеки, стили, фото, схемы) встраивается внутрь файла, поэтому
 он открывается двойным щелчком с флешки без интернета.
 """
-import base64, json, zipfile
+import base64, json, sys, zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT / "tools"))
+from webp_speed import speed_up, total_ms  # noqa: E402
 SRC, NM, DIST = ROOT / "src", ROOT / "node_modules", ROOT / "dist"
 NAME = "Prezentaciya_Aleksandr_I"
+# Общая скорость анимаций: 1.0 — исходная, 1.5 — всё на треть быстрее (каждая анимация 2/3 времени).
+SPEED = 1.5
 
 
 def text(p):
@@ -33,7 +37,10 @@ def build():
     diagrams = {}
     for n in range(2, 8):
         slides = slides.replace("{{DIAGRAM_FINAL_%d}}" % n, "data:image/webp;base64," + b64(SRC / "diagrams" / f"s{n}_final.webp"))
-        diagrams[str(n)] = b64(SRC / "diagrams" / f"s{n}.webp")
+        raw = (SRC / "diagrams" / f"s{n}.webp").read_bytes()
+        fast = speed_up(raw, SPEED)
+        print(f"  схема {n}: {total_ms(raw) / 1000:.2f} с -> {total_ms(fast) / 1000:.2f} с")
+        diagrams[str(n)] = base64.b64encode(fast).decode()
     parts = {
         "REVEAL_CSS": text(NM / "reveal.js/dist/reveal.css"),
         "STYLE": text(SRC / "style.css"),
@@ -45,6 +52,7 @@ def build():
         "GSAP_JS": safe_js(text(NM / "gsap/dist/gsap.min.js")),
         "THREE_JS": safe_js(text(NM / "three/build/three.min.js")),
         "DIAGRAMS": json.dumps(diagrams),
+        "SPEED": str(SPEED),
         "APP_JS": safe_js(text(SRC / "app.js")),
     }
     html = text(SRC / "template.html")

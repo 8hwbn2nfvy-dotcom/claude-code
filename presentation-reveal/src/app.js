@@ -171,10 +171,13 @@
   }
 
   // камера догоняет яблоко; лёгкое вращение яблока в покое показывает объём
+  // общая скорость анимаций (задаётся в build.py): GSAP, камера и листья ускоряются одинаково
+  var SPEED = window.__SPEED || 1;
+  gsap.globalTimeline.timeScale(SPEED);
   gsap.ticker.add(function (time, dtMs) {
     var dt = Math.min(0.05, dtMs / 1000);
-    stepParts(dt);
-    cam += (target() - cam) * (1 - Math.exp(-dt * 6.5));
+    stepParts(dt * SPEED);
+    cam += (target() - cam) * (1 - Math.exp(-dt * 6.5 * SPEED));
     if (!moveTl && !reduce) st.ry += dt * 0.35;
     draw();
   });
