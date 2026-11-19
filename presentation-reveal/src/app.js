@@ -60,7 +60,7 @@
   function target() { return clamp(st.y - H * 0.5, 0, SH - H); }
 
   /* ================= three.js: объёмное яблоко ================= */
-  var THREEok = false, renderer, scene3, camera3, squashG, tiltG, spinG, shadowM, ghosts = [];
+  var THREEok = false, renderer, scene3, camera3, squashG, tiltG, spinG, shadowM;
   function appleTexture() {          // кожура с настоящего фото яблока (tools/apple_skin.py)
     var t = new THREE.Texture();
     var im = new Image();
@@ -122,41 +122,34 @@
     rg.addColorStop(0, 'rgba(0,0,0,.5)'); rg.addColorStop(1, 'rgba(0,0,0,0)'); sg.fillStyle = rg; sg.fillRect(0, 0, 64, 64);
     shadowM = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, depthWrite: false }));
     shadowM.position.z = -500; scene3.add(shadowM);
-    // шлейф за быстро летящим яблоком
-    for (var k = 0; k < 3; k++) {
-      var gm = new THREE.Mesh(body.geometry, new THREE.MeshBasicMaterial({ color: 0xd23a2a, transparent: true, opacity: 0, depthWrite: false }));
-      gm.position.z = -300 - k; scene3.add(gm); ghosts.push(gm);
-    }
     canvas.hidden = false; heroImg.hidden = true;
     return true;
   }
+  // холст размером только с яблоко и двигается вместе с ним:
+  // на телефоне перерисовывать весь экран каждый кадр слишком дорого
+  var BOX = 100;
   function sizeThree() {
     if (!THREEok) return;
-    renderer.setSize(W, H, false);
-    camera3.left = 0; camera3.right = W; camera3.top = 0; camera3.bottom = -H; camera3.updateProjectionMatrix();
+    BOX = Math.ceil(R * 4.4);
+    renderer.setSize(BOX, BOX, false);
+    canvas.style.width = canvas.style.height = BOX + 'px';
+    camera3.left = -BOX / 2; camera3.right = BOX / 2; camera3.top = BOX / 2; camera3.bottom = -BOX / 2; camera3.updateProjectionMatrix();
   }
 
   /* ================= кадр ================= */
-  var hist = [];
   function draw() {
     var ty = -Math.round(cam);
     tree.style.transform = 'translate3d(' + offX.toFixed(1) + 'px,' + ty + 'px,0)';
     var sy = st.y - cam;
     if (THREEok) {
-      squashG.position.set(st.x, -sy, 0);
+      canvas.style.transform = 'translate3d(' + (st.x - BOX / 2).toFixed(1) + 'px,' + (sy - BOX / 2).toFixed(1) + 'px,0)';
+      squashG.position.set(0, 0, 0);
       squashG.scale.set(R * st.sx, R * st.sy, R * st.sx);
       tiltG.rotation.set(st.rx, 0, -st.tilt);
       spinG.rotation.y = st.ry;
-      shadowM.position.set(st.x + R * 0.25, -(sy + R * 0.55), -500);
+      shadowM.position.set(R * 0.25, -R * 0.55, -500);
       shadowM.scale.set(R * 2.3, R * 1.0, 1);
       shadowM.material.opacity = st.speed > 0 ? 0.25 : 0.7;
-      hist.unshift([st.x, sy]); if (hist.length > 10) hist.pop();
-      var trail = Math.min(1, st.speed / (H * 1.2));
-      ghosts.forEach(function (g, k) {
-        var h = hist[Math.min(hist.length - 1, (k + 1) * 3)];
-        g.position.set(h[0], -h[1], g.position.z); g.scale.set(R * st.sx * .96, R * st.sy * 1.04, R);
-        g.material.opacity = trail * [0.22, 0.12, 0.06][k];
-      });
       renderer.render(scene3, camera3);
     } else {
       var HS = R * 2.06;
